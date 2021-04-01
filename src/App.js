@@ -10,6 +10,7 @@ import {
 } from '@chakra-ui/number-input';
 import { useState } from 'react'
 import { CircularProgress } from '@chakra-ui/progress';
+import { Tooltip } from '@chakra-ui/tooltip';
 
 function App() {
   const [latitude, setLatitude] = useState('')
@@ -120,9 +121,11 @@ function App() {
             </Stack>
             <Stack direction='row'>
               <Input readOnly value={cities}></Input>
-              <Button
-                onClick={copyCitiesToClipboard}
-              >📋</Button>
+              <Tooltip label='Copy to clipboard' hasArrow closeDelay={500}>
+                <Button
+                  onClick={copyCitiesToClipboard}
+                >📋</Button>
+              </Tooltip>
             </Stack>
           </FormControl>
         </Box>
