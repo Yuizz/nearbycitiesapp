@@ -43,7 +43,8 @@ function App() {
     const minutes = Number(coords.substring(coords.indexOf('°')+1, coords.indexOf(`'`)))
     const seconds = Number(coords.substring(coords.indexOf(`'`) + 1, coords.indexOf(`"`)))
     
-    const decimalCoords = grades + minutes / 60 + seconds / 3600
+    let decimalCoords = grades + minutes / 60 + seconds / 3600
+    if (coords.toLowerCase().includes('w') || coords.toLowerCase().includes('s')) decimalCoords = decimalCoords * -1
     return decimalCoords
   }
 
@@ -101,7 +102,7 @@ function App() {
 
             <Button
               isLoading={status}
-              loadingText = 'Buscando ciudades'
+              loadingText='Buscando ciudades'
               width='full'
               mt={4}
               onClick={latitude && longitude ? getData : null}
