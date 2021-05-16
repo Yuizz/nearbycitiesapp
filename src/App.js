@@ -12,30 +12,55 @@ function App() {
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [numberOfCities, setNumberOfCities] = useState(4)
+  const [data, setData] = useState([])
   const [cities, setCities] = useState('')
   const [status, setStatus] = useState(false)
+  const [isNewValue, setIsNewValue] = useState(true)
   const { hasCopied, onCopy } = useClipboard(cities)
 
   const getData = (event) => {
     event.preventDefault()
-    event.target.style.isLoading = true
+    // event.target.style.isLoading = true
 
     const link = `https://nearby-cities.netlify.app/.netlify/functions/search?latitude=${latitude}&longitude=${longitude}`
-    
-    fetch(link)
-    .then(response => response.json())
-    .then(data => formatData(data))
-    
-    setStatus(true)
+    if(isNewValue){
+      setStatus(true)
+      fetch(link)
+        .then(response => response.json())
+        .then(d => {
+          console.log('fetching')
+          setData(d)
+          formatData(d, numberOfCities)
+          setIsNewValue(false)
+          console.log(d)
+        })
+        .finally(()=> setStatus(false))
+    } else {
+      formatData(data, numberOfCities)
+    }
   }
   
-  const formatData = (data) => {
-    const citiesQuery = []
-    for (let i = 0; i < numberOfCities; i++) {
-      citiesQuery.push(data[i].name.toUpperCase())
+  const checkForPrevious = (coord) => {
+    const setState = {longitude: setLongitude, latitude: setLatitude}
+
+    return (event) => {
+      const formatedValue = coordsToDecimal(event.currentTarget.value)
+      let newValue =  false
+
+      if(formatedValue !== coord) newValue = true
+      setState[event.currentTarget.name](formatedValue)
+      setIsNewValue(newValue)
+      console.log(formatedValue)
     }
+  }
+
+  const formatData = (data, numberOfCities) => {
+    // const citiesQuery = []
+    // for (let i = 0; i < numberOfCities; i++) {
+    //   citiesQuery.push(data[i].name.toUpperCase())
+    // }
+    const citiesQuery = data.map(city => city.name.toUpperCase()).slice(0, numberOfCities)
     setCities(citiesQuery.join(', '))
-    setStatus(false)
   }
 
   const coordsToDecimal = (coords) => {
@@ -50,12 +75,14 @@ function App() {
 
   return (
     <div className="App">
-      <Flex minHeight='100vh' width='full' align='center' justifyContent='center'>
+      <Flex minHeight='100vh' width='full' align='center'
+        justifyContent='center'
+      >
         <Box
           maxWidth='450px'
           borderWidth={1}
           borderRadius={10}
-          boxShadow='lg'
+          boxShadow='2xl'
           px={4}
           py={4}
           textAlign='center'
@@ -64,20 +91,23 @@ function App() {
               <Heading>Encontrar ciudades cercanas</Heading>
           </Box>
           <form>
-            <FormControl isRequired>
+            <FormControl isRequired mb={4}>
               <FormLabel>Latitud: </FormLabel>
               <Input
+                name='latitude'
                 placeholder="Ingresa la latidud"
-                onChange={event => setLatitude(coordsToDecimal(event.currentTarget.value))}
+                // onBlur={event => setLatitude(coordsToDecimal(event.currentTarget.value))}
+                onBlur={checkForPrevious(latitude)}
               ></Input>
             </FormControl>
 
-            <FormControl isRequired>
+            <FormControl isRequired mb={4}>
               <FormLabel>Longitud: </FormLabel>
               <Input
-                aria-required
+                name='longitude'
                 placeholder='Ingresa la longitud'
-                onChange={event => setLongitude(coordsToDecimal(event.currentTarget.value))}
+                // onBlur={event => setLongitude(coordsToDecimal(event.currentTarget.value))}
+                onBlur={checkForPrevious(longitude)}
               ></Input>
             </FormControl>
 
@@ -93,7 +123,7 @@ function App() {
                 <NumberInputField
                 />
                   <NumberInputStepper>
-                    <NumberIncrementStepper />
+                    <NumberIncrementStepper/>
                     <NumberDecrementStepper/>
                   </NumberInputStepper>
               </NumberInput>
@@ -101,6 +131,7 @@ function App() {
             </FormControl>
 
             <Button
+              colorScheme = 'teal'
               isLoading={status}
               loadingText='Buscando ciudades'
               width='full'
@@ -111,7 +142,7 @@ function App() {
 
             <FormLabel mt={10}>Ciudades cercanas: </FormLabel>
 
-            <InputGroup>
+            <InputGroup borderColor = {status ? 'teal' : ''}>
               <Input readOnly value={cities} />
               <InputRightElement>
                 <Tooltip
