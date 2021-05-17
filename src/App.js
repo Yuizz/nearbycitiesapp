@@ -7,20 +7,20 @@ import {
   useClipboard
 } from '@chakra-ui/react'
 import { useState } from 'react'
+import MapModal from "./components/MapModal.jsx"
 
 function App() {
   const [latitude, setLatitude] = useState('')
   const [longitude, setLongitude] = useState('')
   const [numberOfCities, setNumberOfCities] = useState(4)
   const [data, setData] = useState([])
-  const [cities, setCities] = useState('')
+  const [cities, setCities] = useState([])
   const [status, setStatus] = useState(false)
   const [isNewValue, setIsNewValue] = useState(true)
-  const { hasCopied, onCopy } = useClipboard(cities)
+  const { hasCopied, onCopy } = useClipboard(cities.map(city=>city.name.toUpperCase()).join(', '))
 
   const getData = (event) => {
     event.preventDefault()
-    // event.target.style.isLoading = true
 
     const link = `https://nearby-cities.netlify.app/.netlify/functions/search?latitude=${latitude}&longitude=${longitude}`
     if(isNewValue){
@@ -28,11 +28,9 @@ function App() {
       fetch(link)
         .then(response => response.json())
         .then(d => {
-          console.log('fetching')
           setData(d)
           formatData(d, numberOfCities)
           setIsNewValue(false)
-          console.log(d)
         })
         .finally(()=> setStatus(false))
     } else {
@@ -50,17 +48,11 @@ function App() {
       if(formatedValue !== coord) newValue = true
       setState[event.currentTarget.name](formatedValue)
       setIsNewValue(newValue)
-      console.log(formatedValue)
     }
   }
 
   const formatData = (data, numberOfCities) => {
-    // const citiesQuery = []
-    // for (let i = 0; i < numberOfCities; i++) {
-    //   citiesQuery.push(data[i].name.toUpperCase())
-    // }
-    const citiesQuery = data.map(city => city.name.toUpperCase()).slice(0, numberOfCities)
-    setCities(citiesQuery.join(', '))
+    setCities(data.slice(0, numberOfCities))
   }
 
   const coordsToDecimal = (coords) => {
@@ -96,7 +88,6 @@ function App() {
               <Input
                 name='latitude'
                 placeholder="Ingresa la latidud"
-                // onBlur={event => setLatitude(coordsToDecimal(event.currentTarget.value))}
                 onBlur={checkForPrevious(latitude)}
               ></Input>
             </FormControl>
@@ -106,7 +97,6 @@ function App() {
               <Input
                 name='longitude'
                 placeholder='Ingresa la longitud'
-                // onBlur={event => setLongitude(coordsToDecimal(event.currentTarget.value))}
                 onBlur={checkForPrevious(longitude)}
               ></Input>
             </FormControl>
@@ -143,20 +133,26 @@ function App() {
             <FormLabel mt={10}>Ciudades cercanas: </FormLabel>
 
             <InputGroup borderColor = {status ? 'teal' : ''}>
-              <Input readOnly value={cities} />
+              <Input readOnly value={cities.map(city=>city.name.toUpperCase()).join(', ')} />
               <InputRightElement>
                 <Tooltip
-                  label='Copiar al portapapeles'
+                  label={'Copiar al portapapeles'}
                   hasArrow
-                  defaultIsOpen
                   closeDelay={500}>
-                <Button onClick={onCopy}>
-                  {hasCopied ? '✔' : '📋'}
-                </Button>
-              </Tooltip>
+                  <Button onClick={onCopy}>
+                    {hasCopied ? '✔' : '📋'}
+                  </Button>
+                </Tooltip>
               </InputRightElement>
             </InputGroup>
 
+          <MapModal
+            latitude={latitude}
+            longitude={longitude}
+            cities={cities}
+            isDisabled={(!latitude || !longitude || !cities)}
+            mt={4}
+          />
 
         </Box>
       </Flex>
